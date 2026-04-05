@@ -18,26 +18,20 @@ You need the following before you can deploy anything:
 
 **Terraform** — https://developer.hashicorp.com/terraform/install  
 Verify with:
-```bash
 terraform -v
-```
 
 **AWS CLI** — https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html  
 Verify with:
-```bash
 aws --version
-```
 
 **An AWS account with an IAM user** that has AdministratorAccess. Do not use the root account. Generate an Access Key and Secret Key for the IAM user.
 
 **Configure the AWS CLI** with your credentials:
-```bash
 aws configure
-```
+
 Set the region to `eu-central-1`.
 
 **An EC2 Key Pair** in the eu-central-1 region. Create it with:
-```bash
 aws ec2 create-key-pair --key-name techcorp-key --region eu-central-1 --query 'KeyMaterial' --output text > ~/.ssh/techcorp-key.pem
 chmod 600 ~/.ssh/techcorp-key.pem
 ```
@@ -69,34 +63,26 @@ region            = "eu-central-1"
 instance_type_web = "t2.micro"
 instance_type_db  = "t2.micro"
 key_pair_name     = "techcorp-key"
-my_ip             = "YOUR_IP/32"
+my_ip             = "83.137.6.60/32"
 ```
 
 Never commit this file. It is already in `.gitignore`.
 
 ### 3. Initialize Terraform
-```bash
 terraform init
-```
 
 ### 4. Preview what will be created
-```bash
 terraform plan
-```
 
 Read through the output before applying. It shows every resource that will be created.
 
 ### 5. Deploy
-```bash
 terraform apply
-```
 
 Type `yes` when prompted. This takes around 5 to 10 minutes. The NAT Gateways take the longest.
 
 ### 6. Check your outputs
-```bash
 terraform output
-```
 
 This prints the Bastion public IP, the ALB DNS name, and the VPC ID.
 
@@ -105,66 +91,44 @@ This prints the Bastion public IP, the ALB DNS name, and the VPC ID.
 ## Accessing the Infrastructure
 
 ### Bastion Host
-```bash
-ssh -i ~/.ssh/techcorp-key.pem ec2-user@<bastion_public_ip>
-```
+ssh -i ~/.ssh/techcorp-key.pem ec2-user@18.192.148.176
 
 ### Web Servers (from inside the bastion)
 First copy your key to the bastion from your local machine:
-```bash
 scp -i ~/.ssh/techcorp-key.pem ~/.ssh/techcorp-key.pem ec2-user@<bastion_public_ip>:~/.ssh/techcorp-key.pem
-```
 
 Then SSH from the bastion:
-```bash
-ssh -i ~/.ssh/techcorp-key.pem ec2-user@<web_server_private_ip>
-```
+ssh -i ~/.ssh/techcorp-key.pem ec2-user@10.0.3.111
 
 ### Database Server (from inside the bastion)
-```bash
-ssh -i ~/.ssh/techcorp-key.pem ec2-user@<db_server_private_ip>
-```
+ssh -i ~/.ssh/techcorp-key.pem ec2-user@10.0.3.44
 
 ### PostgreSQL (from inside the DB server)
-```bash
 sudo -u postgres psql
-```
 
 ### Web Application
 Open your browser and go to:
-```
-http://<alb_dns_name>
-```
+http://techcorp-alb-1580213901.eu-central-1.elb.amazonaws.com
 
 You should see a page showing the TechCorp web server and the instance ID of whichever web server is currently handling your request. Refreshing may show a different instance ID as the ALB switches between the two servers.
-
----
 
 ## Cleanup Instructions
 
 When you are done, destroy everything to avoid unnecessary AWS charges. NAT Gateways in particular cost money even when idle.
 
 ### Destroy all resources
-```bash
 terraform destroy
-```
 
 Type `yes` when prompted. Wait for it to complete fully before closing your terminal.
 
 ### Confirm everything is gone
-```bash
 terraform state list
-```
 
 Should return nothing.
 
 ### Delete the key pair if no longer needed
-```bash
 aws ec2 delete-key-pair --key-name techcorp-key --region eu-central-1
 rm ~/.ssh/techcorp-key.pem
-```
-
----
 
 ## Challenges I Ran Into
 
