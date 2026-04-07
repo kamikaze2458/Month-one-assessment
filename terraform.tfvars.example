@@ -1,0 +1,5 @@
+region            = "eu-central-1"
+instance_type_web = "t2.micro"
+instance_type_db  = "t2.micro"
+key_pair_name     = "techcorp-key"
+my_ip             = "YOUR_IP/32"
